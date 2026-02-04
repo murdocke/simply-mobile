@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "simplymusic-mobile",
-    "slug": "simplymusic-mobile",
+    "name": "Simply Music",
+    "slug": "simplymusic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "simplymusicmobile",
+    "scheme": "simplymusic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.simplymusic.mobile"
     },
     "android": {
+      "package": "com.simplymusic.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
