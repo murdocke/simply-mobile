@@ -28,6 +28,8 @@ const MAPPING = {
   'books.vertical.fill': 'local-library',
   'sparkles': 'auto-awesome',
   'bag.fill': 'shopping-bag',
+  'metronome.fill': 'metronome',
+  'calendar': 'calendar-month',
 } as IconMapping;
 
 /**

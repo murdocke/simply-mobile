@@ -1,11 +1,15 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams } from 'expo-router';
 
 import { AppShell } from '@/components/app-shell';
+import { useAppTheme } from '@/components/theme/app-theme-provider';
 import { getMenusForRole, getRoleFromUser } from '@/constants/menus';
 
 export default function CurriculumScreen() {
+  const { palette, mode } = useAppTheme();
+  const styles = useMemo(() => createStyles(palette, mode), [palette, mode]);
   const { user } = useLocalSearchParams<{ user?: string }>();
   const role = getRoleFromUser(user);
   const { menu, quick } = getMenusForRole(role);
@@ -70,7 +74,11 @@ export default function CurriculumScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (
+  palette: ReturnType<typeof useAppTheme>['palette'],
+  mode: 'light' | 'dark'
+) =>
+  StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,7 +88,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#2a2a2a',
+    color: palette.text,
   },
   statusPill: {
     paddingHorizontal: 12,
@@ -97,15 +105,15 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#7b7772',
+    color: palette.textMuted,
     marginBottom: 16,
   },
   lessonCard: {
-    backgroundColor: '#fff',
+    backgroundColor: palette.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-    shadowColor: '#000',
+    borderColor: palette.border,
+    shadowColor: palette.shadow,
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
@@ -117,7 +125,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     overflow: 'hidden',
-    backgroundColor: '#111',
+    backgroundColor: mode === 'dark' ? '#050505' : '#111',
   },
   video: {
     flex: 1,
@@ -130,19 +138,19 @@ const styles = StyleSheet.create({
   lessonOverline: {
     fontSize: 11,
     letterSpacing: 2,
-    color: '#9b938c',
+    color: palette.textMuted,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   lessonTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#2a2a2a',
+    color: palette.text,
   },
   lessonSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#7b7772',
+    color: palette.textMuted,
   },
   metaRow: {
     marginTop: 16,
@@ -175,15 +183,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     fontWeight: '600',
-    color: '#2a2a2a',
+    color: palette.text,
   },
   progressCard: {
     marginTop: 16,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: '#f8f6f3',
+    backgroundColor: palette.surfaceSoft,
     borderWidth: 1,
-    borderColor: '#ece6dd',
+    borderColor: palette.border,
   },
   progressRow: {
     flexDirection: 'row',
@@ -193,23 +201,23 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 11,
     letterSpacing: 1.5,
-    color: '#9b938c',
+    color: palette.textMuted,
     textTransform: 'uppercase',
   },
   progressValue: {
     fontSize: 12,
-    color: '#6f6a66',
+    color: palette.textMuted,
   },
   progressTrack: {
     height: 6,
     borderRadius: 999,
-    backgroundColor: '#ebe6de',
+    backgroundColor: palette.borderStrong,
   },
   progressFill: {
     width: '65%',
     height: '100%',
     borderRadius: 999,
-    backgroundColor: '#c8102e',
+    backgroundColor: palette.primary,
   },
   nextPill: {
     alignSelf: 'flex-start',
@@ -223,6 +231,6 @@ const styles = StyleSheet.create({
   },
   nextText: {
     fontSize: 12,
-    color: '#2a2a2a',
+    color: palette.text,
   },
 });

@@ -10,17 +10,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-
-const palette = {
-  background: '#f6f4f1',
-  card: '#ffffff',
-  border: '#e6e0da',
-  text: '#2a2a2a',
-  muted: '#8b8782',
-  primary: '#c8102e',
-  primaryDark: '#a40d25',
-  error: '#b8322d',
-};
+import { useAppTheme } from '@/components/theme/app-theme-provider';
 
 const accounts = {
   neil: { password: '123456', label: 'Company account' },
@@ -29,24 +19,38 @@ const accounts = {
 } as const;
 
 export default function LoginScreen() {
+  const { palette } = useAppTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showDemo, setShowDemo] = useState(false);
 
   const normalizedUsername = useMemo(() => username.trim().toLowerCase(), [username]);
+  const demoAccounts = useMemo(
+    () =>
+      Object.entries(accounts).map(([key, value]) => ({
+        username: key,
+        role: value.label.replace(' account', ''),
+      })),
+    []
+  );
 
-  const handleSignIn = () => {
-    const account = accounts[normalizedUsername as keyof typeof accounts];
+  const handleSignIn = (nextUser?: string, nextPassword?: string) => {
+    const nextNormalized = (nextUser ?? normalizedUsername).trim().toLowerCase();
+    const pass = nextPassword ?? password;
+    const account = accounts[nextNormalized as keyof typeof accounts];
 
-    if (!account || account.password !== password) {
+    if (!account || account.password !== pass) {
       setError('Invalid username or password.');
+      setShowDemo(true);
       return;
     }
 
     setError('');
     router.replace({
       pathname: '/dashboard',
-      params: { user: normalizedUsername },
+      params: { user: nextNormalized },
     });
   };
 
@@ -69,7 +73,7 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <TextInput
               placeholder="Username"
-              placeholderTextColor={palette.muted}
+              placeholderTextColor={palette.textMuted}
               autoCapitalize="none"
               value={username}
               onChangeText={(value) => {
@@ -80,7 +84,7 @@ export default function LoginScreen() {
             />
             <TextInput
               placeholder="Password"
-              placeholderTextColor={palette.muted}
+              placeholderTextColor={palette.textMuted}
               secureTextEntry
               value={password}
               onChangeText={(value) => {
@@ -98,13 +102,53 @@ export default function LoginScreen() {
             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
             <Text style={styles.buttonText}>Sign In</Text>
           </Pressable>
+
+          <Pressable
+            onPress={() =>
+              setShowDemo((current) => {
+                const next = !current;
+                if (!next) {
+                  setError('');
+                  setUsername('');
+                  setPassword('');
+                }
+                return next;
+              })
+            }
+            style={({ pressed }) => [styles.demoToggle, pressed && styles.demoTogglePressed]}>
+            <Text style={styles.demoToggleText}>Demo Accounts</Text>
+          </Pressable>
+
+          {showDemo ? (
+            <View style={styles.demoCard}>
+              <View style={styles.demoHeader}>
+                <Text style={styles.demoTitle}>Available Logins</Text>
+                <Text style={styles.demoPill}>Password: 123456</Text>
+              </View>
+              {demoAccounts.map((account) => (
+                <Pressable
+                  key={account.username}
+                  onPress={() => {
+                    setUsername(account.username);
+                    setPassword('123456');
+                    setError('');
+                    handleSignIn(account.username, '123456');
+                  }}
+                  style={({ pressed }) => [styles.demoRow, pressed && styles.demoRowPressed]}>
+                  <Text style={styles.demoUsername}>{account.username}</Text>
+                  <Text style={styles.demoRole}>{account.role}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
+  StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: palette.background,
@@ -118,13 +162,13 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: palette.card,
+    backgroundColor: palette.surface,
     borderRadius: 18,
     paddingHorizontal: 24,
     paddingVertical: 28,
     borderWidth: 1,
     borderColor: palette.border,
-    shadowColor: '#000',
+    shadowColor: palette.shadow,
     shadowOpacity: 0.08,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
@@ -150,7 +194,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   brandOverline: {
-    color: palette.muted,
+    color: palette.textMuted,
     fontSize: 11,
     letterSpacing: 3,
   },
@@ -167,7 +211,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: '#fff',
+    backgroundColor: palette.surface,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: Platform.select({ ios: 12, android: 10, default: 12 }),
@@ -175,7 +219,7 @@ const styles = StyleSheet.create({
     color: palette.text,
   },
   errorText: {
-    color: palette.error,
+    color: palette.danger,
     marginBottom: 14,
   },
   button: {
@@ -185,11 +229,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonPressed: {
-    backgroundColor: palette.primaryDark,
+    backgroundColor: palette.primaryPressed,
   },
   buttonText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 16,
+  },
+  demoToggle: {
+    marginTop: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.surfaceSoft,
+    alignItems: 'center',
+    paddingVertical: 11,
+  },
+  demoTogglePressed: {
+    opacity: 0.86,
+  },
+  demoToggleText: {
+    color: palette.textMuted,
+    fontWeight: '600',
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  demoCard: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.surfaceSoft,
+    overflow: 'hidden',
+  },
+  demoHeader: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  demoTitle: {
+    color: palette.text,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  demoPill: {
+    color: palette.textMuted,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    fontSize: 11,
+  },
+  demoRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  demoRowPressed: {
+    backgroundColor: palette.surface,
+  },
+  demoUsername: {
+    color: palette.text,
+    fontWeight: '600',
+    fontSize: 14,
+    textTransform: 'lowercase',
+  },
+  demoRole: {
+    color: palette.textMuted,
+    fontSize: 13,
+    textTransform: 'capitalize',
   },
 });
