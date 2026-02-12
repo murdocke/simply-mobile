@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAppTheme } from '@/components/theme/app-theme-provider';
+import { armLeftMenuNudgeForNextShell } from '@/components/navigation/menu-nudge-session';
 
 const accounts = {
   neil: { password: '123456', label: 'Company account' },
@@ -48,6 +49,7 @@ export default function LoginScreen() {
     }
 
     setError('');
+    armLeftMenuNudgeForNextShell();
     router.replace({
       pathname: '/dashboard',
       params: { user: nextNormalized },

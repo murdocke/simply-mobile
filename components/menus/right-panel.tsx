@@ -1,5 +1,5 @@
 import { ReactNode, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
 import { useMenuPalette } from '@/components/menus/menu-theme';
@@ -14,13 +14,18 @@ export function RightPanel({ title, children }: RightPanelProps) {
   const menuPalette = useMenuPalette();
   const { mode } = useAppTheme();
   const styles = useMemo(() => createStyles(menuPalette, mode), [menuPalette, mode]);
+  const hasTitle = title.trim().length > 0;
 
   return (
     <BlurView intensity={30} tint="default" experimentalBlurMethod="dimezisBlurView" style={styles.panel}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-      </View>
-      <View style={styles.body}>{children}</View>
+      {hasTitle ? (
+        <View style={styles.header}>
+          <Text style={styles.title}>{title}</Text>
+        </View>
+      ) : null}
+      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+        {children}
+      </ScrollView>
     </BlurView>
   );
 }
@@ -28,7 +33,7 @@ export function RightPanel({ title, children }: RightPanelProps) {
 const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'light' | 'dark') =>
   StyleSheet.create({
   panel: {
-    flex: 1,
+    maxHeight: '100%',
     backgroundColor: mode === 'light' ? 'rgba(236, 240, 246, 0.72)' : 'transparent',
     borderWidth: 1,
     borderColor: menuPalette.glassBorder,
@@ -53,6 +58,11 @@ const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'lig
     color: menuPalette.text,
   },
   body: {
-    flex: 1,
+    flexGrow: 0,
+    maxHeight: '100%',
+  },
+  bodyContent: {
+    flexGrow: 0,
+    paddingBottom: 12,
   },
 });

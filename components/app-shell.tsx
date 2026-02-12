@@ -18,6 +18,10 @@ import { LeftMenuPanel, type MenuItem } from '@/components/menus/left-menu-panel
 import { QuickActionsMenu, type QuickActionItem } from '@/components/menus/quick-actions-menu';
 import { RightPanel } from '@/components/menus/right-panel';
 import { useMenuPalette } from '@/components/menus/menu-theme';
+import { consumeLeftMenuNudgeForNextShell } from '@/components/navigation/menu-nudge-session';
+
+type RightPanelAutoOpenMode = 'none' | 'always' | 'once-per-app-open';
+type RightPanelNudgeMode = 'none' | 'first-visit' | 'every-visit';
 
 type AppShellProps = {
   title: string;
@@ -28,6 +32,11 @@ type AppShellProps = {
   user?: string;
   rightPanelTitle?: string;
   rightPanelContent?: ReactNode;
+  showRightPanelWhenEmpty?: boolean;
+  rightPanelAutoOpen?: RightPanelAutoOpenMode;
+  rightPanelNudgeOnFirstVisit?: boolean;
+  rightPanelNudgeMode?: RightPanelNudgeMode;
+  rightPanelVisitKey?: string;
 };
 
 const PANEL_PEEK_WIDTH = 10;
@@ -36,6 +45,8 @@ const PANEL_WIDTH = 260;
 const EDGE_SWIPE_ZONE_WIDTH = 32;
 const EDGE_SWIPE_TRIGGER = 28;
 const EDGE_SWIPE_ACTIVATE = 8;
+const rightPanelVisitedKeys = new Set<string>();
+const rightPanelNudgedKeys = new Set<string>();
 
 export function AppShell({
   title,
@@ -46,6 +57,11 @@ export function AppShell({
   user,
   rightPanelTitle = 'Details',
   rightPanelContent,
+  showRightPanelWhenEmpty = false,
+  rightPanelAutoOpen = 'none',
+  rightPanelNudgeOnFirstVisit = false,
+  rightPanelNudgeMode = 'none',
+  rightPanelVisitKey,
 }: AppShellProps) {
   const menuPalette = useMenuPalette();
   const { mode } = useAppTheme();
@@ -53,6 +69,8 @@ export function AppShell({
   const [leftOpen, setLeftOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
+  const [leftMenuNudging, setLeftMenuNudging] = useState(false);
+  const [rightPanelNudging, setRightPanelNudging] = useState(false);
   const [topPanel, setTopPanel] = useState<'left' | 'right'>('left');
   const leftAnim = useRef(new Animated.Value(0)).current;
   const quickAnim = useRef(new Animated.Value(0)).current;
@@ -67,6 +85,10 @@ export function AppShell({
   const pathname = usePathname();
   const { bpm, isPlaying, setIsPlaying, beatPulse, volume, setVolume } = useMetronome();
   const showMiniMetronome = isPlaying && pathname !== '/metronome';
+  const hasRightPanelContent = rightPanelContent != null;
+  const canUseRightPanel = hasRightPanelContent || showRightPanelWhenEmpty;
+  const panelVisitKey = rightPanelVisitKey ?? pathname;
+  const lastNudgedVisitKeyRef = useRef<string | null>(null);
 
   const leftTranslateX = leftAnim.interpolate({
     inputRange: [0, 1],
@@ -84,6 +106,17 @@ export function AppShell({
     inputRange: [0, 1],
     outputRange: [PANEL_WIDTH + PANEL_SIDE_INSET - PANEL_PEEK_WIDTH, 0],
   });
+
+  useEffect(() => {
+    if (!canUseRightPanel && rightOpen) {
+      setRightOpen(false);
+      Animated.timing(rightAnim, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [canUseRightPanel, rightAnim, rightOpen]);
 
   useEffect(() => {
     const shouldShow = leftOpen || rightOpen || quickOpen;
@@ -223,6 +256,7 @@ export function AppShell({
   }, [leftAnim, leftOpen, quickAnim, rightAnim, rightOpen]);
 
   const showRightPanel = useCallback((open: boolean) => {
+    if (!canUseRightPanel) return;
     if (open) {
       setTopPanel('right');
     }
@@ -232,7 +266,166 @@ export function AppShell({
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [rightAnim]);
+  }, [canUseRightPanel, rightAnim]);
+
+  const playLeftMenuNudge = useCallback(() => {
+    setLeftMenuNudging(true);
+    setTopPanel('left');
+    leftAnim.stopAnimation();
+    setLeftOpen(false);
+    leftAnim.setValue(0);
+    requestAnimationFrame(() => {
+      setLeftOpen(true);
+      Animated.sequence([
+        Animated.delay(220),
+        Animated.timing(leftAnim, {
+          toValue: 1,
+          duration: 360,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.delay(420),
+        Animated.timing(leftAnim, {
+          toValue: 0.92,
+          duration: 95,
+          useNativeDriver: true,
+        }),
+        Animated.timing(leftAnim, {
+          toValue: 1,
+          duration: 82,
+          useNativeDriver: true,
+        }),
+        Animated.delay(180),
+        Animated.timing(leftAnim, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setLeftMenuNudging(false);
+        setLeftOpen(false);
+      });
+    });
+  }, [leftAnim]);
+
+  useEffect(() => {
+    if (consumeLeftMenuNudgeForNextShell()) {
+      playLeftMenuNudge();
+    }
+  }, [playLeftMenuNudge]);
+
+  const playRightPanelNudge = useCallback(() => {
+    if (!canUseRightPanel) return;
+    setRightPanelNudging(true);
+    setTopPanel('right');
+    rightAnim.stopAnimation();
+    setRightOpen(false);
+    rightAnim.setValue(0);
+    requestAnimationFrame(() => {
+      setRightOpen(true);
+      Animated.sequence([
+        Animated.delay(900),
+        Animated.timing(rightAnim, {
+          toValue: 0.5,
+          duration: 420,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.delay(560),
+        Animated.timing(rightAnim, {
+          toValue: 0.44,
+          duration: 86,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rightAnim, {
+          toValue: 0.5,
+          duration: 72,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rightAnim, {
+          toValue: 0.41,
+          duration: 109,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rightAnim, {
+          toValue: 0.48,
+          duration: 67,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rightAnim, {
+          toValue: 0.5,
+          duration: 93,
+          useNativeDriver: true,
+        }),
+        Animated.delay(240),
+        Animated.timing(rightAnim, {
+          toValue: 0,
+          duration: 320,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        setRightPanelNudging(false);
+        setRightOpen(false);
+        if (!finished) {
+          rightAnim.setValue(0);
+        }
+      });
+    });
+  }, [canUseRightPanel, rightAnim]);
+
+  useEffect(() => {
+    if (!canUseRightPanel) return;
+
+    const isFirstVisit = !rightPanelVisitedKeys.has(panelVisitKey);
+    if (isFirstVisit) {
+      rightPanelVisitedKeys.add(panelVisitKey);
+    }
+
+    const effectiveNudgeMode: RightPanelNudgeMode =
+      rightPanelNudgeMode !== 'none'
+        ? rightPanelNudgeMode
+        : rightPanelNudgeOnFirstVisit
+          ? 'first-visit'
+          : 'none';
+
+    if (
+      effectiveNudgeMode === 'every-visit' &&
+      lastNudgedVisitKeyRef.current !== panelVisitKey
+    ) {
+      lastNudgedVisitKeyRef.current = panelVisitKey;
+      playRightPanelNudge();
+      return;
+    }
+
+    if (
+      effectiveNudgeMode === 'first-visit' &&
+      isFirstVisit &&
+      !rightPanelNudgedKeys.has(panelVisitKey)
+    ) {
+      rightPanelNudgedKeys.add(panelVisitKey);
+      playRightPanelNudge();
+      return;
+    }
+
+    if (rightPanelAutoOpen === 'always') {
+      showRightPanel(true);
+      return;
+    }
+
+    if (rightPanelAutoOpen === 'once-per-app-open' && isFirstVisit) {
+      showRightPanel(true);
+    }
+  }, [
+    canUseRightPanel,
+    panelVisitKey,
+    playRightPanelNudge,
+    rightPanelAutoOpen,
+    rightPanelNudgeMode,
+    rightPanelNudgeOnFirstVisit,
+    showRightPanel,
+  ]);
 
   const leftEdgeSwipeResponder = useMemo(
     () =>
@@ -269,7 +462,7 @@ export function AppShell({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_event, gestureState) => {
-          if (quickOpen || leftOpen) return false;
+          if (!canUseRightPanel || quickOpen || leftOpen) return false;
           const absDx = Math.abs(gestureState.dx);
           const absDy = Math.abs(gestureState.dy);
           if (absDx < EDGE_SWIPE_ACTIVATE || absDx <= absDy) return false;
@@ -293,7 +486,7 @@ export function AppShell({
           }
         },
       }),
-    [leftOpen, quickOpen, rightOpen, showRightPanel]
+    [canUseRightPanel, leftOpen, quickOpen, rightOpen, showRightPanel]
   );
 
   const subtitleLine = useMemo(() => subtitle?.trim(), [subtitle]);
@@ -386,21 +579,25 @@ export function AppShell({
           <Text style={styles.bottomFabIcon}>{quickOpen ? '×' : '+'}</Text>
         </Pressable>
 
-        <Pressable
-          onPress={() => showRightPanel(!rightOpen)}
-          style={({ pressed }) => [
-            styles.rightTab,
-            mode === 'light' && !rightOpen && styles.closedPeekStrong,
-            pressed && styles.rightTabPressed,
-          ]}>
-          <Text style={styles.rightTabIcon}>{rightOpen ? '›' : '‹'}</Text>
-        </Pressable>
+        {canUseRightPanel ? (
+          <>
+            <Pressable
+              onPress={() => showRightPanel(!rightOpen)}
+              style={({ pressed }) => [
+                styles.rightTab,
+                mode === 'light' && !rightOpen && styles.closedPeekStrong,
+                pressed && styles.rightTabPressed,
+              ]}>
+              <Text style={styles.rightTabIcon}>{rightOpen ? '›' : '‹'}</Text>
+            </Pressable>
 
-        <View
-          pointerEvents="box-only"
-          style={[styles.edgeSwipeZone, styles.edgeSwipeZoneRight]}
-          {...rightEdgeSwipeResponder.panHandlers}
-        />
+            <View
+              pointerEvents="box-only"
+              style={[styles.edgeSwipeZone, styles.edgeSwipeZoneRight]}
+              {...rightEdgeSwipeResponder.panHandlers}
+            />
+          </>
+        ) : null}
 
         {(leftOpen || rightOpen || quickOpen) ? (
           <Animated.View
@@ -410,7 +607,9 @@ export function AppShell({
                 opacity: overlayAnim,
                 top: -insets.top,
                 bottom: -insets.bottom,
-                backgroundColor: quickOpen
+                backgroundColor: leftMenuNudging || rightPanelNudging
+                  ? 'transparent'
+                  : quickOpen
                   ? menuPalette.overlay
                   : mode === 'light'
                     ? 'rgba(20, 24, 30, 0.12)'
@@ -453,6 +652,7 @@ export function AppShell({
           ]}>
           <LeftMenuPanel
             items={menuItems}
+            user={user}
             onLogout={() => {
               showLeftMenu(false);
               router.replace('/login');
@@ -467,22 +667,26 @@ export function AppShell({
           />
         </Animated.View>
 
-        <Animated.View
-          pointerEvents={rightOpen ? 'auto' : 'none'}
-          style={[
-            styles.rightPanel,
-            mode === 'light' && !rightOpen && styles.closedPanelPeekLight,
-            topPanel === 'right' ? styles.rightPanelTop : styles.rightPanelBase,
-            {
-              transform: [{ translateX: rightTranslateX }],
-            },
-          ]}>
-          <RightPanel title={rightPanelTitle}>
-            {rightPanelContent ?? (
-              <Text style={styles.rightBodyText}>Right-side panel content goes here.</Text>
-            )}
-          </RightPanel>
-        </Animated.View>
+        {canUseRightPanel ? (
+          <Animated.View
+            pointerEvents={rightOpen ? 'auto' : 'none'}
+            style={[
+              styles.rightPanel,
+              mode === 'light' && !rightOpen && styles.closedPanelPeekLight,
+              topPanel === 'right' ? styles.rightPanelTop : styles.rightPanelBase,
+              {
+                transform: [{ translateX: rightTranslateX }],
+              },
+            ]}>
+            <RightPanel title={rightPanelTitle}>
+              {hasRightPanelContent ? (
+                rightPanelContent
+              ) : (
+                <Text style={styles.rightBodyText}>Right-side panel content goes here.</Text>
+              )}
+            </RightPanel>
+          </Animated.View>
+        ) : null}
       </View>
     </View>
   );
@@ -502,7 +706,7 @@ const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'lig
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 35,
   },
   body: {
     paddingTop: 60,
@@ -759,9 +963,9 @@ const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'lig
   rightPanel: {
     position: 'absolute',
     top: 220,
-    bottom: 110,
     right: 16,
     width: 260,
+    maxHeight: '70%',
   },
   rightPanelBase: {
     zIndex: 6,

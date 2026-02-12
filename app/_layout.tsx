@@ -31,6 +31,12 @@ function RootNavigator() {
         <Stack.Screen name="curriculum" options={{ headerShown: false }} />
         <Stack.Screen name="current-lesson" options={{ headerShown: false }} />
         <Stack.Screen name="metronome" options={{ headerShown: false }} />
+        <Stack.Screen name="practice-hub" options={{ headerShown: false }} />
+        <Stack.Screen name="communications" options={{ headerShown: false }} />
+        <Stack.Screen name="messages" options={{ headerShown: false }} />
+        <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
+        <Stack.Screen name="accounts" options={{ headerShown: false }} />
+        <Stack.Screen name="support" options={{ headerShown: false }} />
         <Stack.Screen name="coaching" options={{ headerShown: false }} />
         <Stack.Screen name="library" options={{ headerShown: false }} />
         <Stack.Screen name="simpedia" options={{ headerShown: false }} />

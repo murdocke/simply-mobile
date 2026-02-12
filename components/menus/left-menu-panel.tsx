@@ -2,9 +2,10 @@ import { ComponentProps, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
-import { useAppTheme } from '@/components/theme/app-theme-provider';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useMenuPalette } from '@/components/menus/menu-theme';
+import { MenuControlsCard } from '@/components/menus/menu-controls-card';
+import { useAppTheme } from '@/components/theme/app-theme-provider';
 
 export type MenuItem = {
   label: string;
@@ -16,20 +17,33 @@ type LeftMenuPanelProps = {
   items: MenuItem[];
   onSelect: (route: string) => void;
   onLogout: () => void;
+  user?: string;
 };
 
-export function LeftMenuPanel({ items, onSelect, onLogout }: LeftMenuPanelProps) {
-  const { mode, setMode } = useAppTheme();
+const accountDisplayNames: Record<string, string> = {
+  brian: 'Brian G.',
+  quinn: 'Quinn F.',
+  neil: 'Neil M.',
+  admin: 'Neil M.',
+};
+
+export function LeftMenuPanel({ items, onSelect, onLogout, user }: LeftMenuPanelProps) {
+  const { mode } = useAppTheme();
   const menuPalette = useMenuPalette();
   const styles = useMemo(() => createStyles(menuPalette, mode), [menuPalette, mode]);
+  const headerTitle =
+    (user ? accountDisplayNames[user.toLowerCase()] : undefined) ?? 'Welcome Back';
 
   return (
     <BlurView intensity={30} tint="default" experimentalBlurMethod="dimezisBlurView" style={styles.panel}>
       <View style={styles.header}>
         <View>
           <Text style={styles.overline}>SIMPLY MUSIC</Text>
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>{headerTitle}</Text>
         </View>
+        <Pressable style={styles.signOutButton} onPress={onLogout}>
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </Pressable>
       </View>
       <ScrollView
         style={styles.list}
@@ -46,28 +60,7 @@ export function LeftMenuPanel({ items, onSelect, onLogout }: LeftMenuPanelProps)
             </View>
           </Pressable>
         ))}
-        <View style={styles.themeWrap}>
-          <Text style={styles.themeLabel}>Theme</Text>
-          <View style={styles.themeRow}>
-            <Pressable
-              style={[styles.themeBtn, mode === 'light' && styles.themeBtnActive]}
-              onPress={() => setMode('light')}>
-              <Text style={[styles.themeBtnText, mode === 'light' && styles.themeBtnTextActive]}>
-                Light
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.themeBtn, mode === 'dark' && styles.themeBtnActive]}
-              onPress={() => setMode('dark')}>
-              <Text style={[styles.themeBtnText, mode === 'dark' && styles.themeBtnTextActive]}>
-                Dark
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-        <Pressable style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutText}>Log out</Text>
-        </Pressable>
+        <MenuControlsCard onOpenMetronome={() => onSelect('/metronome')} />
       </ScrollView>
     </BlurView>
   );
@@ -93,6 +86,7 @@ const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'lig
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 10,
   },
   overline: {
     fontSize: 10,
@@ -135,61 +129,20 @@ const createStyles = (menuPalette: ReturnType<typeof useMenuPalette>, mode: 'lig
     color: menuPalette.text,
     fontWeight: '500',
   },
-  themeWrap: {
-    marginTop: 12,
-    marginBottom: 4,
-    borderRadius: 14,
+  signOutButton: {
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: menuPalette.glassBorder,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: 'center',
     backgroundColor: menuPalette.itemBackground,
-    padding: 10,
   },
-  themeLabel: {
+  signOutText: {
     color: menuPalette.text,
     fontSize: 11,
-    letterSpacing: 1.2,
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  themeRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  themeBtn: {
-    flex: 1,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: menuPalette.glassBorder,
-    paddingVertical: 8,
-    alignItems: 'center',
-    backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.3)',
-  },
-  themeBtnActive: {
-    backgroundColor: menuPalette.primary,
-    borderColor: menuPalette.primary,
-  },
-  themeBtnText: {
-    color: menuPalette.text,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  themeBtnTextActive: {
-    color: '#fff',
-  },
-  logoutButton: {
-    marginTop: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: menuPalette.glassBorder,
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: menuPalette.itemBackground,
-  },
-  logoutText: {
-    color: menuPalette.text,
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.2,
   },
 });

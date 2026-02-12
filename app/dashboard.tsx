@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 
 import { AppShell } from '@/components/app-shell';
+import { LiveRegionClocks } from '@/components/company/live-region-clocks';
 import { useAppTheme } from '@/components/theme/app-theme-provider';
 import { getMenusForRole, getRoleFromUser } from '@/constants/menus';
 
@@ -227,9 +228,6 @@ export default function DashboardScreen() {
                 <View style={styles.teacherLessonRight}>
                   <Text style={styles.paidPill}>UNPAID</Text>
                   <Text style={styles.timeText}>6:00 PM</Text>
-                  <Pressable style={styles.prepPill}>
-                    <Text style={styles.prepPillText}>PREP</Text>
-                  </Pressable>
                 </View>
               </View>
 
@@ -243,9 +241,6 @@ export default function DashboardScreen() {
                 <View style={styles.teacherLessonRight}>
                   <Text style={styles.paidPill}>UNPAID</Text>
                   <Text style={styles.timeText}>7:00 PM</Text>
-                  <Pressable style={styles.prepPill}>
-                    <Text style={styles.prepPillText}>PREP</Text>
-                  </Pressable>
                 </View>
               </View>
 
@@ -259,9 +254,6 @@ export default function DashboardScreen() {
                 <View style={styles.teacherLessonRight}>
                   <Text style={styles.paidPill}>UNPAID</Text>
                   <Text style={styles.timeText}>8:00 PM</Text>
-                  <Pressable style={styles.prepPill}>
-                    <Text style={styles.prepPillText}>PREP</Text>
-                  </Pressable>
                 </View>
               </View>
             </View>
@@ -405,14 +397,7 @@ export default function DashboardScreen() {
             <Text style={[styles.teacherTitle, isPhone && styles.teacherTitlePhone]}>Dashboard</Text>
             <Text style={styles.studentSubtitle}>Choose a workspace to jump into a focused view.</Text>
           </View>
-          <View style={styles.companyHeaderPills}>
-            <View style={styles.companyHeaderPill}>
-              <Text style={styles.companyHeaderPillText}>MELBOURNE · FEB 12, 2026, 6:17:35 AM</Text>
-            </View>
-            <View style={styles.companyHeaderPill}>
-              <Text style={styles.companyHeaderPillText}>SACRAMENTO · FEB 11, 2026, 11:17:35 AM</Text>
-            </View>
-          </View>
+          <LiveRegionClocks />
         </View>
 
         <View style={[styles.companyStatsGrid, !isWide && styles.dashboardGridStacked]}>
@@ -427,21 +412,45 @@ export default function DashboardScreen() {
               <View style={styles.companyBillingRow}>
                 <View style={styles.companyBillingItem}>
                   <Text style={styles.companyBillingLabel}>TOTAL DUE</Text>
-                  <Text style={styles.companyBillingValue}>$205,335</Text>
+                  <Text
+                    style={styles.companyBillingValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}>
+                    $205,335
+                  </Text>
                 </View>
                 <View style={styles.companyBillingItem}>
                   <Text style={styles.companyBillingLabel}>BILLING DATE</Text>
-                  <Text style={[styles.companyBillingValue, styles.companyBillingValueDate]}>Mar 1, 2026</Text>
+                  <Text
+                    style={[styles.companyBillingValue, styles.companyBillingValueDate]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}>
+                    Mar 1, 2026
+                  </Text>
                 </View>
               </View>
               <View style={styles.companyBillingRow}>
                 <View style={styles.companyBillingItem}>
                   <Text style={styles.companyBillingLabel}>ACTIVE STUDENTS</Text>
-                  <Text style={styles.companyBillingValue}>22,815</Text>
+                  <Text
+                    style={styles.companyBillingValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}>
+                    22,815
+                  </Text>
                 </View>
                 <View style={styles.companyBillingItem}>
                   <Text style={styles.companyBillingLabel}>AT-RISK ACCOUNTS</Text>
-                  <Text style={styles.companyBillingValue}>14</Text>
+                  <Text
+                    style={styles.companyBillingValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}>
+                    14
+                  </Text>
                 </View>
               </View>
             </View>
@@ -471,68 +480,21 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <View style={styles.companyWorkCard}>
-          <View style={styles.companyWorkHead}>
-            <View>
-              <Text style={styles.cardOverline}>COMPANY WORKSTREAMS</Text>
-              <Text style={styles.companyWorkTitle}>Jump Back Into Key Areas</Text>
-              <Text style={styles.companyStatBody}>
-                Prioritize the next action across content, billing, accounts, and messaging.
-              </Text>
-            </View>
-            <View style={styles.updatedPill}>
-              <Text style={styles.updatedPillText}>Updated today</Text>
-            </View>
+        <View style={[styles.companyStatsGrid, !isWide && styles.dashboardGridStacked]}>
+          <View style={styles.companyStatCard}>
+            <Text style={styles.cardOverline}>SUBSCRIPTIONS</Text>
+            <Text style={styles.companyStatValue}>22,815</Text>
+            <Text style={styles.companyStatBody}>Current student subscriptions across all studios.</Text>
           </View>
-
-          <View style={[styles.companyWorkGrid, !isWide && styles.dashboardGridStacked]}>
-            <View style={styles.companyWorkItem}>
-              <Text style={styles.cardOverline}>LESSON LIBRARY</Text>
-              <Text style={styles.companyStatBody}>Review new uploads and release dates.</Text>
-            </View>
-            <View style={styles.companyWorkItem}>
-              <Text style={styles.cardOverline}>SUBSCRIPTIONS</Text>
-              <Text style={styles.companyStatBody}>Monitor student counts and next billing.</Text>
-            </View>
-            <View style={styles.companyWorkItem}>
-              <Text style={styles.cardOverline}>ACCOUNTS</Text>
-              <Text style={styles.companyStatBody}>Teacher roster, statuses, and student lists.</Text>
-            </View>
-            <View style={styles.companyWorkItem}>
-              <Text style={styles.cardOverline}>MESSAGES</Text>
-              <Text style={styles.companyStatBody}>Respond to teacher outreach.</Text>
-            </View>
-            <View style={styles.companyWorkItem}>
-              <Text style={styles.cardOverline}>MESSAGE REVIEW</Text>
-              <Text style={styles.companyStatBody}>Audit sentiment and response times.</Text>
-            </View>
+          <View style={styles.companyStatCard}>
+            <Text style={styles.cardOverline}>ACCOUNTS</Text>
+            <Text style={styles.companyStatValue}>30 Teachers</Text>
+            <Text style={styles.companyStatBody}>Teacher directory, statuses, and roster assignments.</Text>
           </View>
-        </View>
-
-        <View style={[styles.companyBottomGrid, !isWide && styles.dashboardGridStacked]}>
-          <View style={styles.companyBillingCard}>
-            <Text style={styles.cardOverline}>COMMUNICATIONS</Text>
-            <Text style={styles.companyWorkTitle}>Teacher Messaging Focus</Text>
-            <Text style={styles.companyStatBody}>Keep tabs on response times and outbound reminders.</Text>
-
-            <View style={styles.companyCommList}>
-              <View style={styles.companyCommItem}>
-                <Text style={styles.companyStatBody}>12 unresolved billing questions</Text>
-              </View>
-              <View style={styles.companyCommItem}>
-                <Text style={styles.companyStatBody}>8 onboarding follow-ups needed</Text>
-              </View>
-              <View style={styles.companyCommItem}>
-                <Text style={styles.companyStatBody}>6 lesson library updates to announce</Text>
-              </View>
-              <View style={styles.companyCommItem}>
-                <Text style={styles.companyStatBody}>4 VIP teachers awaiting response</Text>
-              </View>
-            </View>
-
-            <Pressable style={styles.companyActionPill}>
-              <Text style={styles.companyActionPillText}>OPEN MESSAGE CENTER</Text>
-            </Pressable>
+          <View style={styles.companyStatCard}>
+            <Text style={styles.cardOverline}>SUPPORT</Text>
+            <Text style={styles.companyStatValue}>6 Open</Text>
+            <Text style={styles.companyStatBody}>Active requests focused on teacher support and guidance.</Text>
           </View>
         </View>
       </AppShell>
@@ -567,8 +529,12 @@ export default function DashboardScreen() {
 const createStyles = (
   palette: ReturnType<typeof useAppTheme>['palette'],
   mode: 'light' | 'dark'
-) =>
-  StyleSheet.create({
+) => {
+  const lightCardBackground = mode === 'light' ? '#f3f6fb' : palette.background;
+  const lightSoftBackground = mode === 'light' ? '#edf2f8' : palette.surfaceSoft;
+  const lightPillBackground = mode === 'light' ? '#f8fbff' : palette.surface;
+
+  return StyleSheet.create({
   studentHeader: {
     marginBottom: 16,
     flexDirection: 'row',
@@ -620,7 +586,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 14,
   },
   teacherTopHead: {
@@ -631,7 +597,7 @@ const createStyles = (
   },
   teacherTopCount: {
     marginTop: 4,
-    fontSize: 40,
+    fontSize: 34,
     color: palette.text,
     fontWeight: '600',
   },
@@ -645,7 +611,7 @@ const createStyles = (
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.borderStrong,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 12,
     paddingVertical: 8,
     flexDirection: 'row',
@@ -682,7 +648,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 12,
     marginBottom: 24,
   },
@@ -691,26 +657,6 @@ const createStyles = (
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-  },
-  companyHeaderPills: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    marginTop: 12,
-  },
-  companyHeaderPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  companyHeaderPillText: {
-    color: palette.textMuted,
-    fontSize: 11,
-    letterSpacing: 2,
   },
   companyStatsGrid: {
     flexDirection: 'row',
@@ -722,14 +668,14 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 14,
     minWidth: 220,
   },
   companyStatValue: {
     marginTop: 10,
     color: palette.text,
-    fontSize: 42,
+    fontSize: 30,
     fontWeight: '600',
   },
   companyStatBody: {
@@ -741,7 +687,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 14,
     marginBottom: 12,
   },
@@ -756,14 +702,15 @@ const createStyles = (
   companyWorkTitle: {
     marginTop: 10,
     color: palette.text,
-    fontSize: 40,
+    fontSize: 22,
     fontWeight: '500',
+    lineHeight: 28,
   },
   updatedPill: {
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
@@ -783,7 +730,7 @@ const createStyles = (
     borderRadius: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 12,
   },
   companyBottomGrid: {
@@ -796,7 +743,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 14,
   },
   companyBillingGrid: {
@@ -812,7 +759,7 @@ const createStyles = (
     borderRadius: 12,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surfaceSoft,
+    backgroundColor: lightSoftBackground,
     padding: 12,
   },
   companyBillingLabel: {
@@ -823,11 +770,12 @@ const createStyles = (
   companyBillingValue: {
     marginTop: 6,
     color: palette.text,
-    fontSize: 26,
+    fontSize: 23,
     fontWeight: '600',
+    flexShrink: 1,
   },
   companyBillingValueDate: {
-    fontSize: 22,
+    fontSize: 20,
   },
   companyCommList: {
     marginTop: 12,
@@ -837,7 +785,7 @@ const createStyles = (
     borderRadius: 12,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surfaceSoft,
+    backgroundColor: lightSoftBackground,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -846,7 +794,7 @@ const createStyles = (
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.borderStrong,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -860,12 +808,12 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 14,
   },
   teacherCount: {
     marginTop: 8,
-    fontSize: 40,
+    fontSize: 34,
     color: palette.text,
     fontWeight: '600',
   },
@@ -931,19 +879,6 @@ const createStyles = (
     fontSize: 13,
     letterSpacing: 1,
   },
-  prepPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#c7bfb3',
-    backgroundColor: palette.surface,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  prepPillText: {
-    color: '#7f7a73',
-    fontSize: 11,
-    letterSpacing: 2,
-  },
   upcomingHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -964,7 +899,7 @@ const createStyles = (
     borderRadius: 14,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 12,
   },
   upcomingDate: {
@@ -975,7 +910,7 @@ const createStyles = (
   upcomingCount: {
     marginTop: 6,
     color: palette.text,
-    fontSize: 37,
+    fontSize: 32,
     fontWeight: '600',
   },
   upcomingRow: {
@@ -983,7 +918,7 @@ const createStyles = (
     borderRadius: 10,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 10,
     paddingVertical: 8,
     flexDirection: 'row',
@@ -1009,7 +944,7 @@ const createStyles = (
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.borderStrong,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -1034,7 +969,7 @@ const createStyles = (
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.borderStrong,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -1047,7 +982,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surfaceSoft,
+    backgroundColor: lightSoftBackground,
     padding: 14,
     marginBottom: 14,
   },
@@ -1086,7 +1021,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.background,
+    backgroundColor: lightCardBackground,
     padding: 12,
   },
   cardOverline: {
@@ -1196,7 +1131,7 @@ const createStyles = (
     borderRadius: 999,
     borderWidth: 1,
     borderColor: palette.borderStrong,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     paddingHorizontal: 14,
     paddingVertical: 8,
     alignSelf: 'flex-start',
@@ -1217,11 +1152,11 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surfaceSoft,
+    backgroundColor: lightSoftBackground,
     padding: 12,
   },
   teacherDateNavCard: {
-    backgroundColor: mode === 'light' ? palette.background : palette.surfaceSoft,
+    backgroundColor: mode === 'light' ? lightCardBackground : palette.surfaceSoft,
   },
   sideTitle: {
     marginTop: 8,
@@ -1251,7 +1186,7 @@ const createStyles = (
     borderStyle: 'dashed',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
   },
   emptyText: {
     color: palette.textMuted,
@@ -1270,7 +1205,7 @@ const createStyles = (
     borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.border,
-    backgroundColor: palette.surfaceSoft,
+    backgroundColor: lightSoftBackground,
     padding: 16,
   },
   bottomCardTitle: {
@@ -1301,7 +1236,7 @@ const createStyles = (
     transform: [{ scale: 1.08 }],
   },
   card: {
-    backgroundColor: palette.surface,
+    backgroundColor: lightPillBackground,
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
@@ -1322,3 +1257,4 @@ const createStyles = (
     color: palette.textMuted,
   },
 });
+};

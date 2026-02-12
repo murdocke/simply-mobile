@@ -30,6 +30,11 @@ const MAPPING = {
   'bag.fill': 'shopping-bag',
   'metronome.fill': 'metronome',
   'calendar': 'calendar-month',
+  'figure.run': 'directions-run',
+  'bubble.left.and.bubble.right.fill': 'forum',
+  'envelope.fill': 'mail',
+  'creditcard.fill': 'credit-card',
+  'lifepreserver.fill': 'support-agent',
 } as IconMapping;
 
 /**

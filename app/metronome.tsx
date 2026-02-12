@@ -3,10 +3,12 @@ import {
   Animated,
   Easing,
   LayoutChangeEvent,
+  Modal,
   PanResponder,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -19,6 +21,9 @@ import { getMenusForRole, getRoleFromUser } from '@/constants/menus';
 
 const MIN_BPM = 40;
 const MAX_BPM = 220;
+const TAP_TEMPO_RESET_MS = 2500;
+const TAP_TEMPO_MAX_SAMPLES = 8;
+const TAP_TEMPO_MIN_TAPS_FOR_UPDATE = 3;
 const TIME_SIGNATURES = ['4/4', '3/4', '2/4', '6/8'] as const;
 type MetronomePreset = {
   id: string;
@@ -27,6 +32,20 @@ type MetronomePreset = {
   timeSignature: TimeSignature;
   accentOn: boolean;
 };
+
+type SongPreset = {
+  id: string;
+  title: string;
+  bpm: number;
+  timeSignature: TimeSignature;
+};
+
+const SONG_PRESETS: SongPreset[] = [
+  { id: 'dreams-come-true', title: 'Dreams Come True', bpm: 105, timeSignature: '4/4' },
+  { id: 'night-storm', title: 'Night Storm', bpm: 122, timeSignature: '4/4' },
+  { id: 'alma-mater-blues', title: 'Alma Mater Blues', bpm: 117, timeSignature: '4/4' },
+  { id: 'greensleeves', title: 'Greensleeves', bpm: 73, timeSignature: '6/8' },
+];
 
 export default function MetronomeScreen() {
   const { palette } = useAppTheme();
@@ -51,6 +70,9 @@ export default function MetronomeScreen() {
   } = useMetronome();
 
   const [presets, setPresets] = useState<MetronomePreset[]>([]);
+  const [songsModalOpen, setSongsModalOpen] = useState(false);
+  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const [songSearchQuery, setSongSearchQuery] = useState('');
   const [trackWidth, setTrackWidth] = useState(1);
   const [trackPageX, setTrackPageX] = useState(0);
   const [volumeTrackWidth, setVolumeTrackWidth] = useState(1);
@@ -61,6 +83,11 @@ export default function MetronomeScreen() {
   const beatPulseScale = useRef(new Animated.Value(1)).current;
   const beatGlowOpacity = useRef(new Animated.Value(0)).current;
   const beatGlowScale = useRef(new Animated.Value(1)).current;
+  const tapPulseScale = useRef(new Animated.Value(1)).current;
+  const tapPulseOpacity = useRef(new Animated.Value(0)).current;
+  const tapTempoTimesRef = useRef<number[]>([]);
+  const tapTempoResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyingSongPresetRef = useRef(false);
 
   const triggerBeatFlash = useCallback(
     (isAccentedBeat: boolean) => {
@@ -250,6 +277,119 @@ export default function MetronomeScreen() {
   const thumbLeft = Math.max(0, fillWidth - 12);
   const volumeFillWidth = Math.max(0, volumeToX(volume));
   const volumeThumbLeft = Math.max(0, volumeFillWidth - 10);
+  const selectedSongPreset = useMemo(
+    () => SONG_PRESETS.find((song) => song.id === selectedSongId) ?? null,
+    [selectedSongId]
+  );
+  const filteredSongPresets = useMemo(() => {
+    const query = songSearchQuery.trim().toLowerCase();
+    if (!query) return SONG_PRESETS;
+    return SONG_PRESETS.filter((song) => song.title.toLowerCase().includes(query));
+  }, [songSearchQuery]);
+
+  const scheduleTapTempoReset = useCallback(() => {
+    if (tapTempoResetTimerRef.current) {
+      clearTimeout(tapTempoResetTimerRef.current);
+    }
+    tapTempoResetTimerRef.current = setTimeout(() => {
+      tapTempoTimesRef.current = [];
+      tapTempoResetTimerRef.current = null;
+    }, TAP_TEMPO_RESET_MS);
+  }, []);
+
+  const handleTapTempo = useCallback(() => {
+    tapPulseScale.stopAnimation();
+    tapPulseOpacity.stopAnimation();
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(tapPulseScale, {
+          toValue: 1.08,
+          duration: 70,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(tapPulseScale, {
+          toValue: 1,
+          duration: 120,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(tapPulseOpacity, {
+          toValue: 0.28,
+          duration: 70,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(tapPulseOpacity, {
+          toValue: 0,
+          duration: 120,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+
+    const now = Date.now();
+    const taps = tapTempoTimesRef.current;
+    const lastTap = taps[taps.length - 1];
+
+    if (lastTap && now - lastTap > TAP_TEMPO_RESET_MS) {
+      tapTempoTimesRef.current = [now];
+      scheduleTapTempoReset();
+      return;
+    }
+
+    const nextTaps = [...taps, now].slice(-TAP_TEMPO_MAX_SAMPLES);
+    tapTempoTimesRef.current = nextTaps;
+    scheduleTapTempoReset();
+
+    if (nextTaps.length < TAP_TEMPO_MIN_TAPS_FOR_UPDATE) return;
+
+    const intervals = nextTaps.slice(1).map((tap, index) => tap - nextTaps[index]);
+    const avgInterval = intervals.reduce((sum, value) => sum + value, 0) / intervals.length;
+    if (avgInterval <= 0) return;
+
+    const nextBpm = Math.round(60000 / avgInterval);
+    const clampedBpm = Math.max(MIN_BPM, Math.min(MAX_BPM, nextBpm));
+    setBpm((prev) => (prev === clampedBpm ? prev : clampedBpm));
+  }, [scheduleTapTempoReset, setBpm, tapPulseOpacity, tapPulseScale]);
+
+  useEffect(
+    () => () => {
+      if (tapTempoResetTimerRef.current) {
+        clearTimeout(tapTempoResetTimerRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!selectedSongPreset) return;
+
+    if (applyingSongPresetRef.current) {
+      if (bpm === selectedSongPreset.bpm && timeSignature === selectedSongPreset.timeSignature) {
+        applyingSongPresetRef.current = false;
+      }
+      return;
+    }
+
+    if (bpm !== selectedSongPreset.bpm || timeSignature !== selectedSongPreset.timeSignature) {
+      setSelectedSongId(null);
+    }
+  }, [bpm, selectedSongPreset, timeSignature]);
+
+  const applySongPreset = useCallback((song: SongPreset) => {
+    applyingSongPresetRef.current = true;
+    setBpm(song.bpm);
+    setTimeSignature(song.timeSignature);
+    setAccentOn(true);
+    setSelectedSongId(song.id);
+    setSongSearchQuery('');
+    setSongsModalOpen(false);
+  }, [setAccentOn, setBpm, setTimeSignature]);
+
   const savePreset = useCallback(() => {
     setPresets((prev) => [
       ...prev,
@@ -276,8 +416,31 @@ export default function MetronomeScreen() {
         <Text style={styles.subtitle}>Set your tempo and keep steady time while practicing.</Text>
       </View>
 
+      <View style={styles.songPresetRow}>
+        <View style={styles.songPresetButton}>
+          <Pressable style={styles.songPresetMainTouchable} onPress={() => setSongsModalOpen(true)}>
+            <Text style={styles.songPresetText}>
+              {selectedSongPreset?.title ?? 'SELECT SONG PRESET'}
+            </Text>
+          </Pressable>
+          {selectedSongPreset ? (
+            <Pressable style={styles.songPresetClear} onPress={() => setSelectedSongId(null)}>
+              <Text style={styles.songPresetClearText}>CLEAR</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
       <View style={[styles.card, isPhone && styles.cardPhone]}>
-        <Text style={styles.label}>Tempo</Text>
+        <View style={styles.tempoHead}>
+          <Text style={styles.label}>Tempo</Text>
+          <Animated.View style={[styles.tapTempoWrap, { transform: [{ scale: tapPulseScale }] }]}>
+            <Animated.View pointerEvents="none" style={[styles.tapTempoPulse, { opacity: tapPulseOpacity }]} />
+            <Pressable style={styles.tapTempoButton} onPress={handleTapTempo}>
+              <Text style={styles.tapTempoText}>TAP</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
         <Text style={styles.bpmValue}>{bpm} BPM</Text>
 
         <View
@@ -382,11 +545,9 @@ export default function MetronomeScreen() {
           <Text style={styles.savePresetText}>Save Preset</Text>
         </Pressable>
 
-        <View style={styles.presetsSection}>
-          <Text style={styles.presetsLabel}>Presets</Text>
-          {presets.length === 0 ? (
-            <Text style={styles.presetsEmpty}>No presets saved yet.</Text>
-          ) : (
+        {presets.length > 0 ? (
+          <View style={styles.presetsSection}>
+            <Text style={styles.presetsLabel}>Presets</Text>
             <View style={styles.presetsList}>
               {presets.map((preset) => (
                 <View key={preset.id} style={styles.presetItem}>
@@ -410,9 +571,69 @@ export default function MetronomeScreen() {
                 </View>
               ))}
             </View>
-          )}
-        </View>
+          </View>
+        ) : null}
       </View>
+
+      <Modal
+        visible={songsModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSongsModalOpen(false)}>
+        <View style={styles.songsModalBackdrop}>
+          <Pressable
+            style={styles.songsModalDismiss}
+            onPress={() => {
+              setSongSearchQuery('');
+              setSongsModalOpen(false);
+            }}
+          />
+          <View style={styles.songsModalCard}>
+            <Text style={styles.songsModalTitle}>Song Presets</Text>
+            <View style={styles.songSearchRow}>
+              <TextInput
+                value={songSearchQuery}
+                onChangeText={setSongSearchQuery}
+                placeholder="Search Songs"
+                placeholderTextColor={palette.textMuted}
+                style={styles.songSearchInput}
+              />
+              <Pressable style={styles.songSearchButton}>
+                <Text style={styles.songSearchButtonText}>SEARCH</Text>
+              </Pressable>
+            </View>
+            <View style={styles.songsModalList}>
+              {filteredSongPresets.map((song) => (
+                <Pressable
+                  key={song.id}
+                  style={[
+                    styles.songOptionRow,
+                    selectedSongId === song.id && styles.songOptionRowActive,
+                  ]}
+                  onPress={() => applySongPreset(song)}>
+                  <Text style={styles.songOptionTitle}>{song.title}</Text>
+                  <Text style={styles.songOptionMeta}>
+                    {song.bpm} BPM • {song.timeSignature}
+                  </Text>
+                </Pressable>
+              ))}
+              {filteredSongPresets.length === 0 ? (
+                <View style={styles.songSearchEmpty}>
+                  <Text style={styles.songSearchEmptyText}>No songs found.</Text>
+                </View>
+              ) : null}
+            </View>
+            <Pressable
+              style={styles.songsModalClose}
+              onPress={() => {
+                setSongSearchQuery('');
+                setSongsModalOpen(false);
+              }}>
+              <Text style={styles.songsModalCloseText}>CLOSE</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </AppShell>
   );
 }
@@ -442,6 +663,50 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       fontSize: 15,
       color: palette.textMuted,
     },
+    songPresetRow: {
+      marginBottom: 12,
+    },
+    songPresetButton: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: palette.borderStrong,
+      backgroundColor: palette.surface,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      paddingRight: 90,
+      minHeight: 48,
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    songPresetMainTouchable: {
+      minHeight: 24,
+      justifyContent: 'center',
+    },
+    songPresetText: {
+      color: palette.text,
+      fontSize: 13,
+      letterSpacing: 1.4,
+      fontWeight: '600',
+    },
+    songPresetClear: {
+      position: 'absolute',
+      right: 8,
+      top: 8,
+      bottom: 8,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+    },
+    songPresetClearText: {
+      color: palette.textMuted,
+      fontSize: 10,
+      letterSpacing: 1.6,
+      fontWeight: '700',
+    },
     card: {
       borderRadius: 16,
       backgroundColor: palette.background,
@@ -458,6 +723,43 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       fontSize: 13,
       letterSpacing: 3,
       color: palette.textMuted,
+    },
+    tempoHead: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 8,
+    },
+    tapTempoButton: {
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: palette.borderStrong,
+      backgroundColor: palette.surface,
+      paddingHorizontal: 24,
+      paddingVertical: 14,
+    },
+    tapTempoWrap: {
+      position: 'relative',
+      overflow: 'visible',
+    },
+    tapTempoPulse: {
+      position: 'absolute',
+      top: -5,
+      bottom: -5,
+      left: -5,
+      right: -5,
+      borderRadius: 999,
+      backgroundColor: palette.primary,
+      shadowColor: palette.shadow,
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+    },
+    tapTempoText: {
+      color: palette.textMuted,
+      fontSize: 16,
+      letterSpacing: 2.2,
+      fontWeight: '700',
     },
     bpmValue: {
       marginTop: 8,
@@ -746,5 +1048,116 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       fontSize: 12,
       fontWeight: '700',
       lineHeight: 14,
+    },
+    songsModalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.38)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 22,
+    },
+    songsModalDismiss: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    songsModalCard: {
+      width: '100%',
+      maxWidth: 420,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surface,
+      padding: 16,
+      gap: 12,
+    },
+    songsModalTitle: {
+      color: palette.text,
+      fontSize: 20,
+      fontWeight: '700',
+    },
+    songSearchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    songSearchInput: {
+      flex: 1,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      color: palette.text,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+    },
+    songSearchButton: {
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: palette.borderStrong,
+      backgroundColor: palette.surfaceSoft,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    songSearchButtonText: {
+      color: palette.textMuted,
+      fontSize: 11,
+      letterSpacing: 1.4,
+      fontWeight: '700',
+    },
+    songsModalList: {
+      gap: 8,
+    },
+    songOptionRow: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    songOptionRowActive: {
+      borderColor: palette.primary,
+      backgroundColor: palette.surface,
+    },
+    songOptionTitle: {
+      color: palette.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    songOptionMeta: {
+      marginTop: 4,
+      color: palette.textMuted,
+      fontSize: 12,
+      letterSpacing: 1,
+    },
+    songSearchEmpty: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+    },
+    songSearchEmptyText: {
+      color: palette.textMuted,
+      fontSize: 12,
+      textAlign: 'center',
+    },
+    songsModalClose: {
+      alignSelf: 'flex-end',
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: palette.borderStrong,
+      backgroundColor: palette.surfaceSoft,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    songsModalCloseText: {
+      color: palette.textMuted,
+      fontSize: 11,
+      letterSpacing: 2,
+      fontWeight: '700',
     },
   });

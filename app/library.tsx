@@ -34,15 +34,25 @@ export default function LibraryScreen() {
       subtitle="Explore the curriculum and open a section to start learning."
       menuItems={menu}
       quickActions={quick}
+      rightPanelTitle=""
+      rightPanelAutoOpen="none"
+      rightPanelNudgeMode="every-visit"
+      rightPanelContent={
+        <View style={styles.rightPanelWrap}>
+          <Text style={styles.rightPanelProgramTitle}>Foundation Program</Text>
+          <View style={styles.rightPanelLevelList}>
+            {levels.map((level) => (
+              <Pressable key={`panel-${level.title}`} style={styles.rightPanelLevelButton}>
+                <Text style={styles.rightPanelLevelButtonText}>{level.title}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable style={styles.rightPanelViewMoreButton}>
+            <Text style={styles.rightPanelViewMoreText}>VIEW MORE</Text>
+          </Pressable>
+        </View>
+      }
       user={user}>
-      <View style={[styles.topHeader, isPhone && styles.topHeaderPhone]}>
-        <Text style={styles.pageOverline}>STUDENTS</Text>
-        <Text style={[styles.pageTitle, isPhone && styles.pageTitlePhone]}>Lesson Library</Text>
-        <Text style={styles.pageSubtitle}>
-          Explore the curriculum and open a section to start learning.
-        </Text>
-      </View>
-
       <View style={[styles.mainCard, isPhone && styles.mainCardPhone]}>
         <Text style={styles.sectionOverline}>CURRICULUM</Text>
         <Text style={[styles.sectionTitle, isPhone && styles.sectionTitlePhone]}>Program Library</Text>
@@ -99,37 +109,10 @@ export default function LibraryScreen() {
 
 const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
   StyleSheet.create({
-  topHeader: {
-    marginBottom: 18,
-  },
-  topHeaderPhone: {
-    marginBottom: 12,
-  },
-  pageOverline: {
-    color: '#c13b3f',
-    fontSize: 12,
-    letterSpacing: 6,
-  },
-  pageTitle: {
-    marginTop: 8,
-    color: palette.text,
-    fontSize: 44,
-    fontWeight: '500',
-  },
-  pageTitlePhone: {
-    fontSize: 34,
-    marginTop: 6,
-  },
-  pageSubtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    color: palette.textMuted,
-  },
   mainCard: {
     borderRadius: 16,
     backgroundColor: palette.background,
-    borderWidth: 1,
-    borderColor: palette.border,
+    borderWidth: 0,
     padding: 24,
     marginBottom: 36,
   },
@@ -254,14 +237,13 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
   },
   levelBottom: {
     marginTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
   },
   levelBottomPhone: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     gap: 8,
   },
   lockedText: {
@@ -283,6 +265,8 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
     backgroundColor: palette.surface,
     paddingHorizontal: 14,
     paddingVertical: 9,
+    width: '100%',
+    alignItems: 'center',
   },
   unlockPillNarrowPhone: {
     width: '100%',
@@ -300,5 +284,46 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
   },
   unlockTextNarrowPhone: {
     letterSpacing: 1.6,
+  },
+  rightPanelWrap: {
+    gap: 12,
+  },
+  rightPanelProgramTitle: {
+    fontSize: 16,
+    color: palette.text,
+    fontWeight: '600',
+  },
+  rightPanelLevelList: {
+    gap: 8,
+  },
+  rightPanelLevelButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: palette.borderStrong,
+    backgroundColor: palette.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  rightPanelLevelButtonText: {
+    color: palette.text,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    fontWeight: '600',
+  },
+  rightPanelViewMoreButton: {
+    marginTop: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: palette.borderStrong,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    alignItems: 'center',
+  },
+  rightPanelViewMoreText: {
+    color: palette.textMuted,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    fontWeight: '600',
   },
 });

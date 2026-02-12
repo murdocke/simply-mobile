@@ -1,22 +1,125 @@
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { AppShell } from '@/components/app-shell';
 import { useAppTheme } from '@/components/theme/app-theme-provider';
 import { getMenusForRole, getRoleFromUser } from '@/constants/menus';
 
-const studentRows = [
-  { name: 'Addy', added: 'Added 2/5/2026', email: 'addy.austin@gmail.com', fee: '$160 Per Mo', level: 'Level 2' },
-  { name: 'Adri', added: 'Added 2/5/2026', email: 'adri@gmail.com', fee: '$160 Per Mo', level: 'Level 3' },
-  { name: 'Ames', added: 'Added 2/6/2026', email: 'apenn81@yahoo.com', fee: '$150 Per Mo', level: 'Level 2' },
-  { name: 'Axel', added: 'Added 2/6/2026', email: 'joybeth.martinez@gmail.com', fee: '$320 Per Mo', level: 'Level 2' },
-  { name: 'Ayaan', added: 'Added 2/6/2026', email: 'ssamreen@gmail.com', fee: '$160 Per Mo', level: 'Level 2' },
-  { name: 'Eli', added: 'Added 2/5/2026', email: 'eli.sing@gmail.com', fee: '$150 Per Mo', level: 'Level 4' },
-  { name: 'Jake', added: 'Added 2/6/2026', email: 'amandajuliancpa@gmail.com', fee: '$160 Per Mo', level: 'Level 2' },
-  { name: 'Joelea', added: 'Added 2/6/2026', email: 'billy_grinstead@yahoo.com', fee: '$150 Per Mo', level: 'Level 3' },
-  { name: 'Josh', added: 'Added 2/5/2026', email: 'josh.s@gmail.com', fee: '$160 Per Mo', level: 'Level 5' },
-  { name: 'Keira', added: 'Added 2/6/2026', email: 'kimluerssen@hotmail.com', fee: '$112 Per Mo', level: 'Level 3' },
+type StudentRecord = {
+  id: string;
+  name: string;
+  email: string;
+  level: string;
+  fee: string;
+  added: string;
+  lastLogin: string;
+  lastPractice: string;
+};
+
+const PAGE_SIZE = 5;
+
+const studentRows: StudentRecord[] = [
+  {
+    id: 'addy',
+    name: 'Addy',
+    email: 'addy.austin@gmail.com',
+    level: 'Level 2',
+    fee: '$160/mo',
+    added: 'Added 2/5/2026',
+    lastLogin: 'Today, 8:42 AM',
+    lastPractice: 'Today, 7:10 AM',
+  },
+  {
+    id: 'adri',
+    name: 'Adri',
+    email: 'adri@gmail.com',
+    level: 'Level 3',
+    fee: '$160/mo',
+    added: 'Added 2/5/2026',
+    lastLogin: 'Yesterday, 6:04 PM',
+    lastPractice: 'Yesterday, 5:33 PM',
+  },
+  {
+    id: 'ames',
+    name: 'Ames',
+    email: 'apenn81@yahoo.com',
+    level: 'Level 2',
+    fee: '$150/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Today, 9:12 AM',
+    lastPractice: 'Today, 8:30 AM',
+  },
+  {
+    id: 'axel',
+    name: 'Axel',
+    email: 'joybeth.martinez@gmail.com',
+    level: 'Level 2',
+    fee: '$320/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Yesterday, 9:45 PM',
+    lastPractice: 'Yesterday, 8:18 PM',
+  },
+  {
+    id: 'ayaan',
+    name: 'Ayaan',
+    email: 'ssamreen@gmail.com',
+    level: 'Level 2',
+    fee: '$160/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Today, 10:05 AM',
+    lastPractice: 'Today, 9:37 AM',
+  },
+  {
+    id: 'eli',
+    name: 'Eli',
+    email: 'eli.sing@gmail.com',
+    level: 'Level 4',
+    fee: '$150/mo',
+    added: 'Added 2/5/2026',
+    lastLogin: 'Today, 11:10 AM',
+    lastPractice: 'Today, 10:24 AM',
+  },
+  {
+    id: 'jake',
+    name: 'Jake',
+    email: 'amandajuliancpa@gmail.com',
+    level: 'Level 2',
+    fee: '$160/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Yesterday, 4:28 PM',
+    lastPractice: 'Yesterday, 3:55 PM',
+  },
+  {
+    id: 'joelea',
+    name: 'Joelea',
+    email: 'billy_grinstead@yahoo.com',
+    level: 'Level 3',
+    fee: '$150/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Today, 7:51 AM',
+    lastPractice: 'Yesterday, 6:40 PM',
+  },
+  {
+    id: 'josh',
+    name: 'Josh',
+    email: 'josh.s@gmail.com',
+    level: 'Level 5',
+    fee: '$160/mo',
+    added: 'Added 2/5/2026',
+    lastLogin: 'Yesterday, 8:05 PM',
+    lastPractice: 'Yesterday, 7:20 PM',
+  },
+  {
+    id: 'keira',
+    name: 'Keira',
+    email: 'kimluerssen@hotmail.com',
+    level: 'Level 3',
+    fee: '$112/mo',
+    added: 'Added 2/6/2026',
+    lastLogin: 'Today, 6:48 AM',
+    lastPractice: 'Today, 6:11 AM',
+  },
 ];
 
 export default function StudentsScreen() {
@@ -26,12 +129,126 @@ export default function StudentsScreen() {
   const role = getRoleFromUser(user);
   const { menu, quick } = getMenusForRole(role);
 
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupPage, setLookupPage] = useState(1);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(studentRows[0]?.id ?? null);
+
+  const filteredStudents = useMemo(() => {
+    const query = lookupQuery.trim().toLowerCase();
+    if (!query) return studentRows;
+
+    const isNumericOnly = /^[0-9]+$/.test(query);
+    if (isNumericOnly) {
+      return studentRows.filter((student) => {
+        const levelNumber = student.level.match(/[0-9]+/)?.[0] ?? '';
+        return levelNumber === query;
+      });
+    }
+
+    return studentRows.filter(
+      (student) =>
+        student.name.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query) ||
+        student.level.toLowerCase().includes(query)
+    );
+  }, [lookupQuery]);
+
+  const totalLookupPages = Math.max(1, Math.ceil(filteredStudents.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setLookupPage(1);
+  }, [lookupQuery]);
+
+  useEffect(() => {
+    setLookupPage((current) => Math.min(current, totalLookupPages));
+  }, [totalLookupPages]);
+
+  useEffect(() => {
+    if (!selectedStudentId) return;
+    const stillExists = studentRows.some((student) => student.id === selectedStudentId);
+    if (!stillExists) {
+      setSelectedStudentId(studentRows[0]?.id ?? null);
+    }
+  }, [selectedStudentId]);
+
+  const lookupStart = (lookupPage - 1) * PAGE_SIZE;
+  const lookupStudents = filteredStudents.slice(lookupStart, lookupStart + PAGE_SIZE);
+  const lastViewedStudents = studentRows.slice(0, 5);
+
   return (
     <AppShell
       title="Students"
       subtitle="Manage your studio roster, lesson readiness, and status updates."
       menuItems={menu}
       quickActions={quick}
+      rightPanelTitle=""
+      rightPanelNudgeMode="every-visit"
+      rightPanelContent={
+        <View style={styles.rightPanelWrap}>
+          <View style={styles.rightPanelActions}>
+            <Pressable style={styles.primaryPill}>
+              <Text style={styles.primaryPillText}>ADD STUDENT</Text>
+            </Pressable>
+            <Pressable style={styles.darkPill}>
+              <Text style={styles.darkPillText}>LESSON FEES</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.lookupCard}>
+            <Text style={styles.lookupOverline}>FIND STUDENT</Text>
+            <Text style={styles.lookupTitle}>Search and Select</Text>
+            <TextInput
+              value={lookupQuery}
+              onChangeText={setLookupQuery}
+              placeholder="Search name or email"
+              placeholderTextColor={palette.textMuted}
+              style={styles.lookupInput}
+            />
+
+            <View style={styles.lookupList}>
+              {lookupStudents.map((student) => {
+                const selected = selectedStudentId === student.id;
+                return (
+                  <Pressable
+                    key={student.id}
+                    style={[styles.lookupItem, selected && styles.lookupItemActive]}
+                    onPress={() => setSelectedStudentId(student.id)}>
+                    <View style={styles.lookupItemTextWrap}>
+                      <Text style={[styles.lookupItemName, selected && styles.lookupItemNameActive]}>
+                        {student.name}
+                      </Text>
+                      <Text style={styles.lookupItemMeta}>{student.email}</Text>
+                    </View>
+                    <Text style={styles.lookupItemLevel}>{student.level}</Text>
+                  </Pressable>
+                );
+              })}
+              {lookupStudents.length === 0 ? (
+                <View style={styles.lookupEmpty}>
+                  <Text style={styles.lookupEmptyText}>No students found.</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.lookupFooter}>
+              <View style={styles.lookupPagerRow}>
+                <Pressable
+                  style={[styles.pagePill, lookupPage === 1 && styles.pagePillDisabled]}
+                  onPress={() => setLookupPage((current) => Math.max(1, current - 1))}
+                  disabled={lookupPage === 1}>
+                  <Text style={styles.pagePillText}>PREV</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.pagePill, lookupPage === totalLookupPages && styles.pagePillDisabled]}
+                  onPress={() => setLookupPage((current) => Math.min(totalLookupPages, current + 1))}
+                  disabled={lookupPage === totalLookupPages}>
+                  <Text style={styles.pagePillText}>NEXT</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      }
       user={user}>
       <View style={styles.headerRow}>
         <View>
@@ -41,94 +258,50 @@ export default function StudentsScreen() {
             Manage your studio roster, lesson readiness, and status updates.
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <Pressable style={styles.darkPill}>
-            <Text style={styles.darkPillText}>LESSON FEES</Text>
-          </Pressable>
-          <Pressable style={styles.primaryPill}>
-            <Text style={styles.primaryPillText}>ADD STUDENT</Text>
-          </Pressable>
-        </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Active Roster</Text>
-        <Text style={styles.sectionMeta}>22 STUDENTS • BRIAN</Text>
+        <Text style={styles.sectionTitle}>Last Viewed</Text>
+        <Text style={styles.sectionMeta}>5 STUDENTS • BRIAN</Text>
 
-        <View style={styles.pinBar}>
-          <Text style={styles.pinText}>No students selected yet. Choose a student to pin them here.</Text>
-        </View>
-
-        <View style={styles.searchRow}>
-          <View style={styles.searchCol}>
-            <Text style={styles.searchLabel}>SEARCH STUDENTS</Text>
-            <TextInput
-              placeholder="Search by name or email..."
-              placeholderTextColor={palette.textMuted}
-              style={styles.searchInput}
-            />
-          </View>
-          <View style={styles.tableActions}>
-            <Pressable style={styles.viewArchivedPill}>
-              <Text style={styles.viewArchivedText}>SHOW ARCHIVED</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.tableWrap}>
-            <View style={styles.tableHead}>
-              <Text style={[styles.th, styles.colSelect]}>SELECT</Text>
-              <Text style={[styles.th, styles.colStudent]}>Student</Text>
-              <Text style={[styles.th, styles.colEmail]}>Email</Text>
-              <Text style={[styles.th, styles.colFee]}>Lesson Fee</Text>
-              <Text style={[styles.th, styles.colLevel]}>Level</Text>
-              <Text style={[styles.th, styles.colStatus]}>Status</Text>
-              <Text style={[styles.th, styles.colActions]}>Actions</Text>
-            </View>
-            {studentRows.map((row) => (
-              <View key={row.email} style={styles.tableRow}>
-                <View style={styles.colSelect}>
-                  <Pressable style={styles.selectPill}>
-                    <Text style={styles.selectPillText}>SELECT</Text>
-                  </Pressable>
+        <View style={styles.lastViewedList}>
+          {lastViewedStudents.map((student) => (
+            <View key={student.id} style={styles.studentCard}>
+              <View style={styles.studentCardHead}>
+                <View>
+                  <Text style={styles.studentName}>{student.name}</Text>
+                  <Text style={styles.studentMeta}>{student.email}</Text>
                 </View>
-                <View style={styles.colStudent}>
-                  <Text style={styles.studentName}>{row.name}</Text>
-                  <Text style={styles.studentMeta}>{row.added}</Text>
-                </View>
-                <Text style={[styles.td, styles.colEmail]}>{row.email}</Text>
-                <Text style={[styles.td, styles.colFee]}>{row.fee}</Text>
-                <View style={styles.colLevel}>
-                  <Text style={styles.levelPill}>{row.level}</Text>
-                </View>
-                <View style={styles.colStatus}>
-                  <Text style={styles.statusPill}>Active</Text>
-                </View>
-                <View style={[styles.colActions, styles.actionsRow]}>
-                  <Pressable style={styles.actionPill}>
-                    <Text style={styles.actionText}>EDIT</Text>
-                  </Pressable>
-                  <Pressable style={styles.actionPill}>
-                    <Text style={styles.actionText}>ARCHIVE</Text>
-                  </Pressable>
+                <View style={styles.studentPills}>
+                  <Text style={styles.levelPill}>{student.level}</Text>
+                  <Text style={styles.feePill}>{student.fee}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-        </ScrollView>
 
-        <View style={styles.footerRow}>
-          <Text style={styles.footerMeta}>SHOWING 1-10 OF 22</Text>
-          <View style={styles.paginationRow}>
-            <Pressable style={styles.pagePill}>
-              <Text style={styles.pagePillText}>PREV</Text>
-            </Pressable>
-            <Text style={styles.pageMeta}>PAGE 1 OF 3</Text>
-            <Pressable style={styles.pagePill}>
-              <Text style={styles.pagePillText}>NEXT</Text>
-            </Pressable>
-          </View>
+              <View style={styles.studentStatsRow}>
+                <View style={styles.statBlock}>
+                  <Text style={styles.statLabel}>LAST LOGIN</Text>
+                  <Text style={styles.statValue}>{student.lastLogin}</Text>
+                </View>
+                <View style={styles.statBlock}>
+                  <Text style={styles.statLabel}>LAST PRACTICE</Text>
+                  <Text style={styles.statValue}>{student.lastPractice}</Text>
+                </View>
+              </View>
+
+              <View style={styles.studentActionsRow}>
+                <Pressable style={styles.actionPill}>
+                  <Text style={styles.actionText}>VIEW MESSAGES</Text>
+                </Pressable>
+                <Pressable style={styles.actionPill}>
+                  <Text style={styles.actionText}>VIEW LESSONS</Text>
+                </Pressable>
+                <Pressable style={styles.actionPill}>
+                  <Text style={styles.actionText}>VIEW PRACTICE LOG</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
         </View>
       </View>
     </AppShell>
@@ -138,10 +311,6 @@ export default function StudentsScreen() {
 const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
   StyleSheet.create({
     headerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: 12,
-      flexWrap: 'wrap',
       marginBottom: 14,
     },
     overline: {
@@ -159,35 +328,6 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       marginTop: 6,
       fontSize: 15,
       color: palette.textMuted,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      gap: 8,
-      alignItems: 'flex-start',
-      marginTop: 12,
-    },
-    darkPill: {
-      borderRadius: 999,
-      backgroundColor: '#1e2731',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    darkPillText: {
-      color: '#fff',
-      fontSize: 11,
-      letterSpacing: 2.4,
-    },
-    primaryPill: {
-      borderRadius: 999,
-      backgroundColor: palette.primary,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    primaryPillText: {
-      color: '#fff',
-      fontSize: 11,
-      letterSpacing: 2.4,
-      fontWeight: '600',
     },
     card: {
       borderRadius: 16,
@@ -208,170 +348,89 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       fontSize: 11,
       letterSpacing: 2.6,
     },
-    pinBar: {
+    lastViewedList: {
       marginTop: 12,
-      borderRadius: 12,
+      gap: 10,
+    },
+    studentCard: {
+      borderRadius: 14,
       borderWidth: 1,
       borderColor: palette.border,
-      backgroundColor: palette.surface,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      backgroundColor: palette.surfaceSoft,
+      padding: 12,
+      gap: 10,
     },
-    pinText: {
-      color: palette.textMuted,
-      fontSize: 14,
-    },
-    searchRow: {
-      marginTop: 14,
+    studentCardHead: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-end',
-      gap: 12,
-      flexWrap: 'wrap',
-      marginBottom: 10,
-    },
-    searchCol: {
-      minWidth: 260,
-      flex: 1,
-    },
-    searchLabel: {
-      color: palette.textMuted,
-      fontSize: 11,
-      letterSpacing: 3,
-      marginBottom: 8,
-    },
-    searchInput: {
-      borderWidth: 1,
-      borderColor: palette.border,
-      borderRadius: 12,
-      backgroundColor: palette.surface,
-      color: palette.text,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      fontSize: 15,
-    },
-    tableActions: {
-      flexDirection: 'row',
-      gap: 8,
-    },
-    viewArchivedPill: {
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: palette.borderStrong,
-      backgroundColor: palette.surface,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-    },
-    viewArchivedText: {
-      fontSize: 11,
-      letterSpacing: 2.2,
-      color: palette.textMuted,
-    },
-    tableWrap: {
-      minWidth: 1040,
-      borderWidth: 1,
-      borderColor: palette.border,
-      borderRadius: 14,
-      overflow: 'hidden',
-      backgroundColor: palette.surface,
-    },
-    tableHead: {
-      flexDirection: 'row',
-      backgroundColor: palette.surfaceSoft,
-      borderBottomWidth: 1,
-      borderBottomColor: palette.border,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-    },
-    th: {
-      color: palette.textMuted,
-      fontSize: 11,
-      letterSpacing: 2.1,
-      textTransform: 'uppercase',
-    },
-    tableRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderBottomWidth: 1,
-      borderBottomColor: palette.border,
-      paddingVertical: 12,
-      paddingHorizontal: 12,
-      minHeight: 54,
-    },
-    td: {
-      color: palette.textMuted,
-      fontSize: 14,
-    },
-    colSelect: {
-      width: 94,
       alignItems: 'flex-start',
-    },
-    colStudent: {
-      width: 260,
-    },
-    colEmail: {
-      width: 300,
-    },
-    colFee: {
-      width: 180,
-    },
-    colLevel: {
-      width: 120,
-      alignItems: 'flex-start',
-    },
-    colStatus: {
-      width: 130,
-      alignItems: 'flex-start',
-    },
-    colActions: {
-      width: 180,
-    },
-    selectPill: {
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: palette.borderStrong,
-      backgroundColor: palette.surface,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-    },
-    selectPillText: {
-      color: palette.textMuted,
-      fontSize: 10,
-      letterSpacing: 2,
+      gap: 10,
     },
     studentName: {
       color: palette.text,
-      fontSize: 16,
-      fontWeight: '500',
+      fontSize: 20,
+      fontWeight: '600',
     },
     studentMeta: {
-      marginTop: 3,
+      marginTop: 2,
       color: palette.textMuted,
       fontSize: 12,
+    },
+    studentPills: {
+      alignItems: 'flex-end',
+      gap: 6,
     },
     levelPill: {
       borderRadius: 999,
       borderWidth: 1,
-      borderColor: palette.border,
+      borderColor: palette.borderStrong,
       backgroundColor: palette.surface,
       paddingHorizontal: 10,
       paddingVertical: 5,
       color: palette.textMuted,
       fontSize: 11,
     },
-    statusPill: {
+    feePill: {
       borderRadius: 999,
-      backgroundColor: '#d5dbc8',
-      color: '#556248',
+      borderWidth: 1,
+      borderColor: palette.borderStrong,
+      backgroundColor: palette.surface,
       paddingHorizontal: 10,
       paddingVertical: 5,
-      overflow: 'hidden',
+      color: palette.textMuted,
       fontSize: 11,
+      letterSpacing: 1,
     },
-    actionsRow: {
+    studentStatsRow: {
+      flexDirection: 'row',
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    statBlock: {
+      minWidth: 160,
+      flex: 1,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surface,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    statLabel: {
+      color: palette.textMuted,
+      fontSize: 10,
+      letterSpacing: 2,
+    },
+    statValue: {
+      marginTop: 4,
+      color: palette.text,
+      fontSize: 13,
+      fontWeight: '500',
+    },
+    studentActionsRow: {
       flexDirection: 'row',
       gap: 8,
-      alignItems: 'center',
+      flexWrap: 'wrap',
     },
     actionPill: {
       borderRadius: 999,
@@ -379,47 +438,151 @@ const createStyles = (palette: ReturnType<typeof useAppTheme>['palette']) =>
       borderColor: palette.borderStrong,
       backgroundColor: palette.surface,
       paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingVertical: 7,
     },
     actionText: {
       color: palette.textMuted,
       fontSize: 10,
-      letterSpacing: 1.6,
+      letterSpacing: 1.5,
     },
-    footerRow: {
-      marginTop: 12,
+    rightPanelWrap: {
+      gap: 12,
+    },
+    rightPanelActions: {
+      gap: 10,
+    },
+    darkPill: {
+      borderRadius: 999,
+      backgroundColor: '#1e2731',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    darkPillText: {
+      color: '#fff',
+      fontSize: 11,
+      letterSpacing: 2.4,
+    },
+    primaryPill: {
+      borderRadius: 999,
+      backgroundColor: palette.primary,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    primaryPillText: {
+      color: '#fff',
+      fontSize: 11,
+      letterSpacing: 2.4,
+      fontWeight: '600',
+    },
+    lookupCard: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surface,
+      padding: 12,
+      gap: 10,
+    },
+    lookupOverline: {
+      color: '#c13b3f',
+      fontSize: 10,
+      letterSpacing: 3.2,
+    },
+    lookupTitle: {
+      color: palette.text,
+      fontSize: 18,
+      fontWeight: '600',
+      marginTop: -2,
+    },
+    lookupInput: {
+      borderWidth: 1,
+      borderColor: palette.border,
+      borderRadius: 10,
+      backgroundColor: palette.surfaceSoft,
+      color: palette.text,
+      paddingHorizontal: 10,
+      paddingVertical: 9,
+      fontSize: 14,
+    },
+    lookupList: {
+      gap: 8,
+    },
+    lookupItem: {
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: 10,
-      flexWrap: 'wrap',
     },
-    footerMeta: {
+    lookupItemActive: {
+      borderColor: palette.primary,
+      backgroundColor: palette.surface,
+    },
+    lookupItemTextWrap: {
+      flex: 1,
+    },
+    lookupItemName: {
+      color: palette.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    lookupItemNameActive: {
+      color: palette.primary,
+    },
+    lookupItemMeta: {
+      marginTop: 2,
       color: palette.textMuted,
       fontSize: 11,
-      letterSpacing: 2.2,
     },
-    paginationRow: {
-      flexDirection: 'row',
+    lookupItemLevel: {
+      color: palette.textMuted,
+      fontSize: 11,
+      letterSpacing: 1.2,
+    },
+    lookupEmpty: {
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surfaceSoft,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+    },
+    lookupEmptyText: {
+      color: palette.textMuted,
+      fontSize: 12,
+      textAlign: 'center',
+    },
+    lookupFooter: {
       gap: 8,
+    },
+    lookupPagerRow: {
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: 8,
+      justifyContent: 'space-between',
     },
     pagePill: {
+      flex: 1,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: palette.borderStrong,
       backgroundColor: palette.surface,
       paddingHorizontal: 10,
       paddingVertical: 6,
+      alignItems: 'center',
+    },
+    pagePillDisabled: {
+      opacity: 0.45,
     },
     pagePillText: {
       color: palette.textMuted,
       fontSize: 10,
       letterSpacing: 1.6,
-    },
-    pageMeta: {
-      color: palette.textMuted,
-      fontSize: 11,
-      letterSpacing: 2,
     },
   });

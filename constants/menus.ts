@@ -17,26 +17,41 @@ export const teacherMenuItems: MenuItem[] = [
   { label: 'Students', route: '/students', icon: 'person.2.fill' },
   { label: 'Schedule', route: '/schedule', icon: 'calendar' },
   { label: 'Current Lesson', route: '/current-lesson', icon: 'graduationcap.fill' },
-  { label: 'Metronome', route: '/metronome', icon: 'metronome.fill' },
-  ...sharedMenuItems.slice(1),
+  { label: 'Library', route: '/library', icon: 'books.vertical.fill' },
+  { label: 'Simpedia', route: '/simpedia', icon: 'sparkles' },
+  { label: 'Communications', route: '/communications', icon: 'bubble.left.and.bubble.right.fill' },
+  { label: 'Messages', route: '/messages', icon: 'envelope.fill' },
 ];
 
 export const studentMenuItems: MenuItem[] = [
   ...sharedMenuItems.slice(0, 1),
   { label: 'Current Lesson', route: '/current-lesson', icon: 'graduationcap.fill' },
-  { label: 'Metronome', route: '/metronome', icon: 'metronome.fill' },
-  ...sharedMenuItems.slice(1),
+  { label: 'Practice Hub', route: '/practice-hub', icon: 'figure.run' },
+  { label: 'Library', route: '/library', icon: 'books.vertical.fill' },
+  { label: 'Simpedia', route: '/simpedia', icon: 'sparkles' },
+  { label: 'Communications', route: '/communications', icon: 'bubble.left.and.bubble.right.fill' },
+  { label: 'Messages', route: '/messages', icon: 'envelope.fill' },
 ];
 
 export const companyMenuItems: MenuItem[] = [
-  ...sharedMenuItems.slice(0, 1),
-  { label: 'Current Lesson', route: '/current-lesson', icon: 'graduationcap.fill' },
-  ...sharedMenuItems.slice(1),
+  { label: 'Dashboard', route: '/dashboard', icon: 'rectangle.grid.2x2.fill' },
+  { label: 'Subscriptions', route: '/subscriptions', icon: 'creditcard.fill' },
+  { label: 'Accounts', route: '/accounts', icon: 'person.2.fill' },
+  { label: 'Library', route: '/library', icon: 'books.vertical.fill' },
+  { label: 'Simpedia', route: '/simpedia', icon: 'sparkles' },
+  { label: 'Support', route: '/support', icon: 'lifepreserver.fill' },
+  { label: 'Messages', route: '/messages', icon: 'envelope.fill' },
 ];
 
 export const teacherQuickActions: QuickActionItem[] = [
   { label: 'New Lesson', icon: 'plus.rectangle.on.rectangle' },
   { label: 'Add Student', icon: 'person.badge.plus' },
+  { label: 'Send Message', icon: 'paperplane.fill' },
+];
+
+export const companyQuickActions: QuickActionItem[] = [
+  { label: 'Build Lesson', icon: 'plus.rectangle.on.rectangle' },
+  { label: 'Add Teacher', icon: 'person.badge.plus' },
   { label: 'Send Message', icon: 'paperplane.fill' },
 ];
 
@@ -55,7 +70,7 @@ export const getMenusForRole = (role: UserRole) => {
     case 'student':
       return { menu: studentMenuItems, quick: teacherQuickActions };
     case 'company':
-      return { menu: companyMenuItems, quick: teacherQuickActions };
+      return { menu: companyMenuItems, quick: companyQuickActions };
     default:
       return { menu: teacherMenuItems, quick: teacherQuickActions };
   }
