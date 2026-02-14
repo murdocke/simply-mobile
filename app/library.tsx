@@ -17,6 +17,14 @@ const levels = [
   { title: 'Level 8', price: '$29' },
   { title: 'Level 9', price: '$29' },
 ];
+const rightPanelPrograms = [
+  'Foundation Program',
+  'Development Program',
+  'Special Programs',
+  'Supplemental Programs',
+  'Extensions Program',
+  'Special Needs Program',
+];
 
 export default function LibraryScreen() {
   const { palette } = useAppTheme();
@@ -39,11 +47,11 @@ export default function LibraryScreen() {
       rightPanelNudgeMode="every-visit"
       rightPanelContent={
         <View style={styles.rightPanelWrap}>
-          <Text style={styles.rightPanelProgramTitle}>Foundation Program</Text>
+          <Text style={styles.rightPanelProgramTitle}>Program Sections</Text>
           <View style={styles.rightPanelLevelList}>
-            {levels.map((level) => (
-              <Pressable key={`panel-${level.title}`} style={styles.rightPanelLevelButton}>
-                <Text style={styles.rightPanelLevelButtonText}>{level.title}</Text>
+            {rightPanelPrograms.map((program) => (
+              <Pressable key={`panel-${program}`} style={styles.rightPanelLevelButton}>
+                <Text style={styles.rightPanelLevelButtonText}>{program}</Text>
               </Pressable>
             ))}
           </View>

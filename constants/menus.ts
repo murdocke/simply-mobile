@@ -44,8 +44,15 @@ export const companyMenuItems: MenuItem[] = [
 ];
 
 export const teacherQuickActions: QuickActionItem[] = [
-  { label: 'New Lesson', icon: 'plus.rectangle.on.rectangle' },
   { label: 'Add Student', icon: 'person.badge.plus' },
+  { label: 'Record Audio', icon: 'mic.fill' },
+  { label: 'Record Video', icon: 'video.fill' },
+  { label: 'Send Message', icon: 'paperplane.fill' },
+];
+
+export const studentQuickActions: QuickActionItem[] = [
+  { label: 'Record Audio', icon: 'mic.fill' },
+  { label: 'Record Video', icon: 'video.fill' },
   { label: 'Send Message', icon: 'paperplane.fill' },
 ];
 
@@ -68,7 +75,7 @@ export const getMenusForRole = (role: UserRole) => {
     case 'teacher':
       return { menu: teacherMenuItems, quick: teacherQuickActions };
     case 'student':
-      return { menu: studentMenuItems, quick: teacherQuickActions };
+      return { menu: studentMenuItems, quick: studentQuickActions };
     case 'company':
       return { menu: companyMenuItems, quick: companyQuickActions };
     default:

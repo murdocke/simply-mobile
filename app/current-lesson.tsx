@@ -136,105 +136,6 @@ export default function CurrentLessonScreen() {
       </View>
 
       <View style={[styles.mainCard, isPhone && styles.mainCardPhone]}>
-        {role === 'student' ? (
-          <View style={styles.captureCard}>
-            <Text style={styles.sectionOverline}>RECORD PRACTICE VIDEO</Text>
-            <Text style={styles.captureTitle}>Capture your current lesson performance</Text>
-            <View style={[styles.captureMediaWrap, isPhone && styles.captureMediaWrapPhone]}>
-              <CameraView
-                ref={cameraRef}
-                mode="video"
-                facing={cameraFacing}
-                style={[styles.cameraPreview, isPhone && styles.cameraPreviewPhone]}
-              />
-              <View style={styles.facingRow}>
-                <Pressable
-                  style={[
-                    styles.facingButton,
-                    cameraFacing === 'back' && styles.facingButtonActive,
-                    isRecording && styles.captureButtonDisabled,
-                  ]}
-                  onPress={() => setCameraFacing('back')}
-                  disabled={isRecording}>
-                  <Text
-                    style={[
-                      styles.facingButtonText,
-                      cameraFacing === 'back' && styles.facingButtonTextActive,
-                    ]}>
-                    Back Camera
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.facingButton,
-                    cameraFacing === 'front' && styles.facingButtonActive,
-                    isRecording && styles.captureButtonDisabled,
-                  ]}
-                  onPress={() => setCameraFacing('front')}
-                  disabled={isRecording}>
-                  <Text
-                    style={[
-                      styles.facingButtonText,
-                      cameraFacing === 'front' && styles.facingButtonTextActive,
-                    ]}>
-                    Front Camera
-                  </Text>
-                </Pressable>
-              </View>
-              <View style={styles.captureActions}>
-                <Pressable
-                  style={[styles.captureButton, styles.captureButtonPrimary, isRecording && styles.captureButtonDisabled]}
-                  onPress={handleStartRecording}
-                  disabled={isRecording}>
-                  <Text style={styles.captureButtonText}>{isRecording ? 'Recording...' : 'Record Video'}</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.captureButton, isRecording ? styles.captureButtonDanger : styles.captureButtonDisabled]}
-                  onPress={handleStopRecording}
-                  disabled={!isRecording}>
-                  <Text style={styles.captureButtonText}>Stop</Text>
-                </Pressable>
-              </View>
-              {selectedVideo ? (
-                <View style={styles.savedVideoWrap}>
-                  <Text style={styles.savedVideoLabel}>Saved Videos</Text>
-                  <Video
-                    style={[styles.savedVideoPlayer, isPhone && styles.savedVideoPlayerPhone]}
-                    source={{ uri: selectedVideo.uri }}
-                    useNativeControls
-                    resizeMode={ResizeMode.COVER}
-                  />
-                  <View style={styles.savedVideoList}>
-                    {savedVideos.map((entry, index) => {
-                      const isActive = entry.id === selectedVideo.id;
-                      const labelDate = new Date(entry.createdAt).toLocaleString();
-                      return (
-                        <View key={entry.id} style={[styles.savedVideoItem, isActive && styles.savedVideoItemActive]}>
-                          <Pressable style={styles.savedVideoSelect} onPress={() => setSelectedVideoId(entry.id)}>
-                            <Text style={[styles.savedVideoItemTitle, isActive && styles.savedVideoItemTitleActive]}>
-                              Recording {savedVideos.length - index}
-                            </Text>
-                            <Text style={styles.savedVideoItemMeta}>{labelDate}</Text>
-                          </Pressable>
-                          <Pressable
-                            style={styles.savedVideoDeleteButton}
-                            onPress={() => handleDeleteSavedVideo(entry.id)}>
-                            <Text style={styles.savedVideoDeleteText}>X</Text>
-                          </Pressable>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-              ) : (
-                <Text style={styles.savedVideoHint}>
-                  Record and stop to save videos. Saved recordings will appear below.
-                </Text>
-              )}
-            </View>
-          </View>
-        ) : null}
-
         <View style={[styles.planRow, !isWide && styles.planRowStacked]}>
           <View>
             <Text style={styles.sectionOverline}>THIS WEEK</Text>
@@ -313,6 +214,105 @@ export default function CurrentLessonScreen() {
           </View>
         </View>
       </View>
+
+      {role === 'student' ? (
+        <View style={styles.captureCard}>
+          <Text style={styles.sectionOverline}>RECORD PRACTICE VIDEO</Text>
+          <Text style={styles.captureTitle}>Capture your current lesson performance</Text>
+          <View style={[styles.captureMediaWrap, isPhone && styles.captureMediaWrapPhone]}>
+            <CameraView
+              ref={cameraRef}
+              mode="video"
+              facing={cameraFacing}
+              style={[styles.cameraPreview, isPhone && styles.cameraPreviewPhone]}
+            />
+            <View style={styles.facingRow}>
+              <Pressable
+                style={[
+                  styles.facingButton,
+                  cameraFacing === 'back' && styles.facingButtonActive,
+                  isRecording && styles.captureButtonDisabled,
+                ]}
+                onPress={() => setCameraFacing('back')}
+                disabled={isRecording}>
+                <Text
+                  style={[
+                    styles.facingButtonText,
+                    cameraFacing === 'back' && styles.facingButtonTextActive,
+                  ]}>
+                  Back Camera
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.facingButton,
+                  cameraFacing === 'front' && styles.facingButtonActive,
+                  isRecording && styles.captureButtonDisabled,
+                ]}
+                onPress={() => setCameraFacing('front')}
+                disabled={isRecording}>
+                <Text
+                  style={[
+                    styles.facingButtonText,
+                    cameraFacing === 'front' && styles.facingButtonTextActive,
+                  ]}>
+                  Front Camera
+                </Text>
+              </Pressable>
+            </View>
+            <View style={styles.captureActions}>
+              <Pressable
+                style={[styles.captureButton, styles.captureButtonPrimary, isRecording && styles.captureButtonDisabled]}
+                onPress={handleStartRecording}
+                disabled={isRecording}>
+                <Text style={styles.captureButtonText}>{isRecording ? 'Recording...' : 'Record Video'}</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.captureButton, isRecording ? styles.captureButtonDanger : styles.captureButtonDisabled]}
+                onPress={handleStopRecording}
+                disabled={!isRecording}>
+                <Text style={styles.captureButtonText}>Stop</Text>
+              </Pressable>
+            </View>
+            {selectedVideo ? (
+              <View style={styles.savedVideoWrap}>
+                <Text style={styles.savedVideoLabel}>Saved Videos</Text>
+                <Video
+                  style={[styles.savedVideoPlayer, isPhone && styles.savedVideoPlayerPhone]}
+                  source={{ uri: selectedVideo.uri }}
+                  useNativeControls
+                  resizeMode={ResizeMode.COVER}
+                />
+                <View style={styles.savedVideoList}>
+                  {savedVideos.map((entry, index) => {
+                    const isActive = entry.id === selectedVideo.id;
+                    const labelDate = new Date(entry.createdAt).toLocaleString();
+                    return (
+                      <View key={entry.id} style={[styles.savedVideoItem, isActive && styles.savedVideoItemActive]}>
+                        <Pressable style={styles.savedVideoSelect} onPress={() => setSelectedVideoId(entry.id)}>
+                          <Text style={[styles.savedVideoItemTitle, isActive && styles.savedVideoItemTitleActive]}>
+                            Recording {savedVideos.length - index}
+                          </Text>
+                          <Text style={styles.savedVideoItemMeta}>{labelDate}</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.savedVideoDeleteButton}
+                          onPress={() => handleDeleteSavedVideo(entry.id)}>
+                          <Text style={styles.savedVideoDeleteText}>X</Text>
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.savedVideoHint}>
+                Record and stop to save videos. Saved recordings will appear below.
+              </Text>
+            )}
+          </View>
+        </View>
+      ) : null}
     </AppShell>
   );
 }
